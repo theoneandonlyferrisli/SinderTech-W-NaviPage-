@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">SinderTech(W/NaviPage)</string>
 
+    <string-array name="nav_drawer_items">
+        <item>拍卖主页</item>
+        <item>公司简介</item>
+        <item>联系我们</item>
+    </string-array>
+
     <string name="title_section1">Section 1</string>
     <string name="title_section2">Section 2</string>
     <string name="title_section3">Section 3</string>

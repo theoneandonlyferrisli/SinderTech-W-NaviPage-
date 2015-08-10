@@ -1,6 +1,8 @@
 package jerei_digital.sindertechwnavipage;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -15,6 +17,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
@@ -31,6 +36,10 @@ public class NaviPage extends AppCompatActivity
      */
     private CharSequence mTitle;
 
+    private WebView webView;
+    private static final String TARGET_URL = "http://192.168.50.200:8877/";
+    private SwipeRefreshLayout swipeRefreshLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +53,61 @@ public class NaviPage extends AppCompatActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        // 初始化WebView
+        webView = (WebView) findViewById(R.id.webView);
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setScrollBarStyle(WebView.SCROLLBARS_OUTSIDE_OVERLAY);
+        webView.requestFocus();
+        webView.loadUrl(TARGET_URL);
+
+        // 覆盖“shouldOverrideUrlLoading”以在WebView内部打开链接
+        webView.setWebViewClient( new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView webView, String url) {
+                webView.loadUrl(url);
+                return false;
+            }
+
+            @Override
+            // 当页面加载失败时显示错误信息
+            public void onReceivedError(WebView webView, int errorCode,
+                                        String description, String faillingUrl) {
+                new AlertDialog.Builder(NaviPage.this)
+                        .setTitle("网页加载错误")
+                        .setMessage("页面加载失败，请下拉页面刷新尝试再次加载！")
+                        .setPositiveButton("确定", null)
+                        .show();
+                super.onReceivedError(webView, errorCode, description, faillingUrl);
+            }
+        });
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            // 显示载入进度
+            @Override
+            public void onProgressChanged(WebView view, int progress) {
+                if (progress == 100) {
+                    swipeRefreshLayout.setRefreshing(false);
+                } else {
+                    if (!swipeRefreshLayout.isRefreshing())
+                        swipeRefreshLayout.setRefreshing(true);
+                }
+
+                super.onProgressChanged(webView, progress);
+            }
+        });
+
+        // 设置下拉刷新功能
+        swipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh);
+        swipeRefreshLayout.setColorSchemeResources(R.color.holo_blue_bright,
+                R.color.holo_green_light, R.color.holo_orange_light,
+                R.color.holo_red_light);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                webView.loadUrl(webView.getUrl());
+            }
+        });
     }
 
     @Override
